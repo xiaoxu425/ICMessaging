@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SecureChat - 端对端加密聊天</title>
+    <title>SecureChat - 端对端加密聊天系统</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
@@ -393,13 +393,6 @@
             margin-top: 10px;
         }
         
-        .step-card img {
-            max-width: 100%;
-            border-radius: 8px;
-            margin-top: 10px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
         .url-display {
             background: rgba(0, 0, 0, 0.5);
             padding: 10px;
@@ -421,14 +414,63 @@
             align-items: center;
             gap: 5px;
         }
+        
+        .encryption-visual {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+        }
+        
+        .visual-step {
+            text-align: center;
+            flex: 1;
+        }
+        
+        .visual-icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            color: var(--success);
+        }
+        
+        .visual-arrow {
+            font-size: 2rem;
+            color: var(--primary);
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1><i class="fas fa-lock"></i> SecureChat</h1>
-            <p class="subtitle">端对端加密实时聊天系统 - 您的消息在离开设备前已被加密，只有接收方可以解密</p>
+            <h1><i class="fas fa-lock"></i> SecureChat - 端对端加密聊天</h1>
+            <p class="subtitle">您的消息在离开设备前已被加密，只有接收方可以解密</p>
         </header>
+        
+        <!-- 加密过程可视化 -->
+        <div class="encryption-visual">
+            <div class="visual-step">
+                <div class="visual-icon"><i class="fas fa-key"></i></div>
+                <div>1. 生成加密密钥</div>
+            </div>
+            <div class="visual-arrow"><i class="fas fa-arrow-right"></i></div>
+            <div class="visual-step">
+                <div class="visual-icon"><i class="fas fa-lock"></i></div>
+                <div>2. 加密消息内容</div>
+            </div>
+            <div class="visual-arrow"><i class="fas fa-arrow-right"></i></div>
+            <div class="visual-step">
+                <div class="visual-icon"><i class="fas fa-share-alt"></i></div>
+                <div>3. 安全传输</div>
+            </div>
+            <div class="visual-arrow"><i class="fas fa-arrow-right"></i></div>
+            <div class="visual-step">
+                <div class="visual-icon"><i class="fas fa-unlock"></i></div>
+                <div>4. 接收方解密</div>
+            </div>
+        </div>
         
         <!-- Alice的聊天界面 -->
         <div class="chat-card">
@@ -550,7 +592,7 @@
         
         <!-- 部署指南 -->
         <div class="deploy-section">
-            <h3><i class="fas fa-cloud-upload-alt"></i> 部署指南</h3>
+            <h3><i class="fas fa-cloud-upload-alt"></i> 部署与共享指南</h3>
             <div class="steps">
                 <div class="step-card">
                     <h4><span class="step-number">1</span>保存HTML文件</h4>
@@ -574,8 +616,12 @@
                 </div>
                 <div class="step-card">
                     <h4><span class="step-number">4</span>分享测试链接</h4>
-                    <p>将GitHub Pages URL发送给测试伙伴，双方同时打开链接</p>
-                    <p>一人使用Alice界面，另一人使用Bob界面</p>
+                    <p>将GitHub Pages URL发送给测试伙伴</p>
+                    <p>双方同时打开链接进行测试</p>
+                    <div class="url-display" id="share-url">https://your-username.github.io/your-repo/securechat.html</div>
+                    <button class="copy-btn" id="copy-share">
+                        <i class="fas fa-copy"></i> 复制分享模板
+                    </button>
                 </div>
             </div>
         </div>
@@ -596,6 +642,7 @@
                 </li>
                 <li><strong>调试观察</strong>：查看底部的调试面板，了解加密/解密过程</li>
                 <li><strong>安全验证</strong>：注意所有消息在传输前已被加密，服务器无法读取内容</li>
+                <li><strong>技术细节</strong>：使用RSA-OAEP（2048位）进行密钥交换，AES-GCM（256位）进行消息加密</li>
             </ul>
         </div>
     </div>
@@ -789,8 +836,8 @@
             debugLog('[System] 正在加载加密模块...');
             
             // 生成Alice和Bob的密钥对
-            const aliceKeys = await generateKeyPair();
-            const bobKeys = await generateKeyPair();
+            let aliceKeys = await generateKeyPair();
+            let bobKeys = await generateKeyPair();
             
             debugLog('[System] 密钥交换完成，安全通道已建立');
             
@@ -800,6 +847,7 @@
                 addMessage(`${from.toLowerCase()}-messages`, from, message, true);
                 
                 // 加密消息
+                debugLog(`[Crypto] ${from} 正在使用 ${to} 的公钥加密消息...`);
                 const encryptedData = await encryptMessage(message, toKeys.publicKey);
                 
                 if (encryptedData) {
@@ -807,6 +855,7 @@
                     
                     // 模拟网络传输延迟
                     setTimeout(async () => {
+                        debugLog(`[Crypto] ${to} 正在使用私钥解密消息...`);
                         // 接收方解密消息
                         const decryptedMessage = await decryptMessage(encryptedData, toKeys.privateKey);
                         
@@ -912,6 +961,12 @@
             document.getElementById('copy-pages').addEventListener('click', () => {
                 navigator.clipboard.writeText('https://your-username.github.io/your-repo/securechat.html');
                 debugLog('[System] GitHub Pages URL模板已复制到剪贴板');
+            });
+            
+            // 复制分享URL
+            document.getElementById('copy-share').addEventListener('click', () => {
+                navigator.clipboard.writeText('https://your-username.github.io/your-repo/securechat.html');
+                debugLog('[System] 分享URL已复制到剪贴板');
             });
         }
         
